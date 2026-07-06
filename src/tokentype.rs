@@ -1,3 +1,4 @@
+#[derive(Clone)]
 pub enum TokenType {
     LeftParen,
     RightParen,
@@ -41,6 +42,7 @@ pub enum TokenType {
     Error(TokenError),
 }
 
+#[derive(Clone)]
 pub struct TokenError {
     pub msg: String,
     pub line: usize,

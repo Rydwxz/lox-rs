@@ -1,4 +1,5 @@
 use crate::tokentype::*;
+use std::collections::HashMap;
 
 pub struct Scanner {
     source: String,
@@ -6,15 +7,34 @@ pub struct Scanner {
     start: usize,
     current: usize,
     line: usize,
+    keywords: HashMap<&'static str, TokenType>,
 }
 impl Scanner {
     pub fn new(source: String) -> Self {
+        let mut map = HashMap::new();
+        map.insert("and", TokenType::And);
+        map.insert("class", TokenType::Class);
+        map.insert("else", TokenType::Else);
+        map.insert("false", TokenType::False);
+        map.insert("for", TokenType::For);
+        map.insert("fun", TokenType::Fun);
+        map.insert("if", TokenType::If);
+        map.insert("nil", TokenType::Nil);
+        map.insert("or", TokenType::Or);
+        map.insert("print", TokenType::Print);
+        map.insert("return", TokenType::Return);
+        map.insert("super", TokenType::Super);
+        map.insert("this", TokenType::This);
+        map.insert("true", TokenType::True);
+        map.insert("var", TokenType::Var);
+        map.insert("while", TokenType::While);
         Self {
             source,
             tokens: Vec::new(),
             start: 0,
             current: 0,
             line: 0,
+            keywords: map,
         }
     }
 
@@ -82,23 +102,28 @@ impl Scanner {
                     self.add_token(TokenType::Slash);
                 }
             }
-            '"' => self.scan_string(),
+            '"' => self.string(),
             ' ' | '\r' | '\t' => {}
             '\n' => self.line += 1,
+            c if is_digit(c) => self.number(),
+            c if is_alpha(c) => self.identifier(),
             _ => self.add_token(TokenType::Error(TokenError {
-                msg: "Unexpected character".to_string(),
+                msg: "unexpected character".to_string(),
                 line: self.line,
             })),
         }
     }
 
     fn is_at_end(&self) -> bool {
-        self.current >= self.source.len() - 1
+        self.current >= self.source.len()
     }
 
     fn advance(&mut self) -> char {
         self.current += 1;
-        self.source[self.current - 1..].chars().next().unwrap()
+        self.source[self.current - 1..self.current]
+            .chars()
+            .next()
+            .unwrap()
     }
 
     fn add_token(&mut self, tokentype: TokenType) {
@@ -123,16 +148,23 @@ impl Scanner {
         }
     }
 
-    fn peek(&mut self) -> char {
+    fn peek(&self) -> char {
         if self.is_at_end() {
             '\0'
         } else {
-            self.source[self.current - 1..].chars().next().unwrap()
+            self.source[self.current..].chars().next().unwrap()
         }
     }
 
-    fn scan_string(&mut self) {
-        println!("begin string() cur:{}", self.current);
+    fn peek_next(&self) -> char {
+        if self.current + 1 >= self.source.len() {
+            '\0'
+        } else {
+            self.source.chars().nth(self.current + 1).unwrap()
+        }
+    }
+
+    fn string(&mut self) {
         while self.peek() != '"' && !self.is_at_end() {
             if self.peek() == '\n' {
                 self.line += 1;
@@ -142,7 +174,7 @@ impl Scanner {
         if self.is_at_end() {
             self.add_token(TokenType::Error(TokenError {
                 line: self.line,
-                msg: format!("Unterminated string"),
+                msg: format!("unterminated string"),
             }));
             return;
         }
@@ -152,4 +184,45 @@ impl Scanner {
             Some(self.source[self.start + 1..self.current - 1].to_string()),
         );
     }
+
+    fn number(&mut self) {
+        while is_digit(self.peek()) {
+            self.advance();
+        }
+        if self.peek() == '.' && is_digit(self.peek_next()) {
+            self.advance();
+            while is_digit(self.peek()) {
+                self.advance();
+            }
+        }
+        self.add_new_token(
+            TokenType::Number,
+            Some(self.source[self.start..self.current].to_string()),
+        );
+    }
+
+    fn identifier(&mut self) {
+        while is_alphanumeric(self.peek()) {
+            self.advance();
+        }
+        let text = &self.source[self.start..self.current];
+        if let Some(tokentype) = self.keywords.get(text) {
+            let t = tokentype.clone();
+            self.add_token(t);
+        } else {
+            self.add_token(TokenType::Identifier);
+        }
+    }
+}
+
+fn is_digit(c: char) -> bool {
+    c >= '0' && c <= '9'
+}
+
+fn is_alpha(c: char) -> bool {
+    (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '_'
+}
+
+fn is_alphanumeric(c: char) -> bool {
+    is_alpha(c) || is_digit(c)
 }
