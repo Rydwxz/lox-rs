@@ -1,4 +1,4 @@
-#[derive(Clone)]
+#[derive(Clone, PartialEq)]
 pub enum TokenType {
     LeftParen,
     RightParen,
@@ -39,13 +39,6 @@ pub enum TokenType {
     Var,
     While,
     EOF,
-    Error(TokenError),
-}
-
-#[derive(Clone)]
-pub struct TokenError {
-    pub msg: String,
-    pub line: usize,
 }
 
 pub struct Token {
@@ -112,7 +105,6 @@ impl fmt::Display for TokenType {
             TokenType::Var => write!(f, "Var"),
             TokenType::While => write!(f, "While"),
             TokenType::EOF => write!(f, "EOF"),
-            TokenType::Error(e) => write!(f, "scan error on line {}: {}", e.line, e.msg),
         }
     }
 }

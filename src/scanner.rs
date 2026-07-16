@@ -1,5 +1,18 @@
 use crate::tokentype::*;
-use std::collections::HashMap;
+use core::fmt;
+use std::{collections::HashMap, fmt::Display};
+
+#[derive(Debug)]
+pub struct ScanError {
+    line: usize,
+    msg: String,
+}
+
+impl Display for ScanError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "Scanner error on line {}: {}", self.line, self.msg)
+    }
+}
 
 pub struct Scanner {
     source: String,
@@ -8,6 +21,7 @@ pub struct Scanner {
     current: usize,
     line: usize,
     keywords: HashMap<&'static str, TokenType>,
+    errors: Vec<ScanError>,
 }
 impl Scanner {
     pub fn new(source: String) -> Self {
@@ -35,10 +49,11 @@ impl Scanner {
             current: 0,
             line: 0,
             keywords: map,
+            errors: Vec::new(),
         }
     }
 
-    pub fn scan_tokens(&mut self) -> &Vec<Token> {
+    pub fn scan_tokens(&mut self) -> Result<&Vec<Token>, &Vec<ScanError>> {
         while !self.is_at_end() {
             self.start = self.current;
             self.scan_token();
@@ -50,7 +65,11 @@ impl Scanner {
             line: self.line,
         });
 
-        &self.tokens
+        if self.errors.len() == 0 {
+            Ok(&self.tokens)
+        } else {
+            Err(&self.errors)
+        }
     }
 
     fn scan_token(&mut self) {
@@ -107,10 +126,10 @@ impl Scanner {
             '\n' => self.line += 1,
             c if is_digit(c) => self.number(),
             c if is_alpha(c) => self.identifier(),
-            _ => self.add_token(TokenType::Error(TokenError {
+            _ => self.errors.push(ScanError {
                 msg: "unexpected character".to_string(),
                 line: self.line,
-            })),
+            }),
         }
     }
 
@@ -172,10 +191,10 @@ impl Scanner {
             self.advance();
         }
         if self.is_at_end() {
-            self.add_token(TokenType::Error(TokenError {
+            self.errors.push(ScanError {
                 line: self.line,
                 msg: format!("unterminated string"),
-            }));
+            });
             return;
         }
         self.advance();
