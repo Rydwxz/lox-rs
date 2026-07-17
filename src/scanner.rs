@@ -29,7 +29,7 @@ impl Scanner {
         map.insert("and", TokenType::And);
         map.insert("class", TokenType::Class);
         map.insert("else", TokenType::Else);
-        map.insert("false", TokenType::False);
+        map.insert("false", TokenType::FalseT);
         map.insert("for", TokenType::For);
         map.insert("fun", TokenType::Fun);
         map.insert("if", TokenType::If);
@@ -39,7 +39,7 @@ impl Scanner {
         map.insert("return", TokenType::Return);
         map.insert("super", TokenType::Super);
         map.insert("this", TokenType::This);
-        map.insert("true", TokenType::True);
+        map.insert("true", TokenType::TrueT);
         map.insert("var", TokenType::Var);
         map.insert("while", TokenType::While);
         Self {
@@ -199,7 +199,7 @@ impl Scanner {
         }
         self.advance();
         self.add_new_token(
-            TokenType::String,
+            TokenType::StringT,
             Some(self.source[self.start + 1..self.current - 1].to_string()),
         );
     }
