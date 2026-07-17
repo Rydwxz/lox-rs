@@ -53,7 +53,7 @@ impl Scanner {
         }
     }
 
-    pub fn scan_tokens(&mut self) -> Result<Vec<Token>, Vec<ScanError>> {
+    pub fn scan_tokens(mut self) -> Result<Vec<Token>, Vec<ScanError>> {
         while !self.is_at_end() {
             self.start = self.current;
             self.scan_token();
