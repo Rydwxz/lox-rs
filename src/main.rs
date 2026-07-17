@@ -1,6 +1,9 @@
+mod expr;
+mod parser;
 mod scanner;
 mod tokentype;
 
+use parser::Parser;
 use scanner::Scanner;
 
 fn main() {
@@ -44,13 +47,21 @@ fn run(source: String) {
     let mut scanner = Scanner::new(source);
     match scanner.scan_tokens() {
         Ok(tokens) => {
-            for token in tokens {
-                println!("{}", token);
+            let parser = Parser::new(tokens);
+            match parser.parse() {
+                Ok(expression) => {
+                    println!("{}", expression);
+                }
+                Err(errors) => {
+                    for error in errors {
+                        println!("{}", error);
+                    }
+                }
             }
         }
         Err(errors) => {
             for error in errors {
-                println!("{:?}", error);
+                println!("{}", error);
             }
         }
     }
