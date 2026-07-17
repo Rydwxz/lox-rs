@@ -10,7 +10,7 @@ pub struct ScanError {
 
 impl Display for ScanError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Scanner error on line {}: {}", self.line, self.msg)
+        write!(f, "Scan error on line {}: {}", self.line, self.msg)
     }
 }
 
